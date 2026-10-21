@@ -126,15 +126,42 @@ def staff_menu(conn, unikey):
     def low_stock():
         table(["Product", "On hand", "Threshold", "Unit"], svc.report_low_stock(conn))
 
+    def view_my_shifts():
+        table(["Shift ID", "Date", "Start", "End", "Role", "Status"],
+              svc.my_shifts(conn, unikey))
+
+    def view_session_bookings():
+        session_id = int(ask("Session ID"))
+        table(["Booking ID", "UniKey", "Name", "Status", "QR Token", "Attendance At", "Override"],
+              svc.session_bookings(conn, session_id))
+
+    def view_roster():
+        on = ask_date("Date for roster (YYYY-MM-DD)")
+        table(["Shift ID", "Start", "End", "Role Type", "Duty", "Name", "UniKey"],
+              svc.shift_roster(conn, on))
+
+    def adjust_stock():
+        shift_id = int(ask("Shift ID"))
+        stock_number = ask("Stock number (e.g. STK-000001)")
+        kind = ask("Adjustment kind (RECEIPT / WASTE)").upper()
+        qty = int(ask("Quantity"))
+        reason = ask("Reason for adjustment")
+        svc.record_stock_adjustment(conn, unikey, shift_id, stock_number, kind, qty, reason)
+        print(f"  ✓ Recorded {kind} adjustment of {qty} for {stock_number} in shift {shift_id}.")
+
     menu(f"Staff {unikey}", [
         ("Front desk: check in a QR code", scan),
+        ("Front desk: view bookings for a session", view_session_bookings),
         ("Special booking (admin override)", special_booking),
         ("Mark no-shows after closing", no_shows),
+        ("View my assigned shifts", view_my_shifts),
+        ("View shift staffing & volunteer roster", view_roster),
         ("Set up a day's shifts and sessions", setup_day),
         ("Report: day attendance summary", day_summary),
         ("Report: sessions near capacity", near_capacity),
         ("Stock: latest counts", stock),
         ("Stock: record a count", count),
+        ("Stock: record receipt/waste adjustment", adjust_stock),
         ("Report: low stock", low_stock),
     ])
 
@@ -156,14 +183,31 @@ def main():
             if person is None:
                 print("  ✗ Unknown UniKey.")
                 continue
-            name, is_student, _is_volunteer, is_staff = person
-            print(f"  Hello, {name}.")
+            name, is_student, is_volunteer, is_staff = person
+            roles = []
+            if is_student:
+                roles.append("Student")
+            if is_volunteer:
+                roles.append("Volunteer")
             if is_staff:
+                roles.append("Staff")
+            print(f"  Hello, {name} (Roles: {', '.join(roles)}).")
+
+            if is_staff and is_student:
+                print("  You hold multiple roles (Staff & Student).")
+                role_choice = ask("Choose role to access (1: Staff, 2: Student)")
+                if role_choice == "2":
+                    student_menu(conn, unikey)
+                else:
+                    staff_menu(conn, unikey)
+            elif is_staff:
                 staff_menu(conn, unikey)
             elif is_student:
                 student_menu(conn, unikey)
+            elif is_volunteer:
+                print("  Volunteers assist on shifts. Full shift rosters can be viewed from the Staff menu.")
             else:
-                print("  This prototype has menus for students and staff only.")
+                print("  This UniKey has no active system roles assigned.")
     finally:
         conn.close()
 

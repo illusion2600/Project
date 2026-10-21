@@ -1,79 +1,116 @@
-# Campus Pantry prototype
+# Campus Pantry Prototype
 
-A command-line Python app for the FoodHub booking and inventory database (COMP9120 group project).
-Students book half-hour sessions and receive a QR token. Staff check students in at the front desk,
-mark no-shows, set up a day's shifts and sessions, record stock counts, and view reports.
-Every operation reads and writes the PostgreSQL database directly; nothing is hard-coded.
+A command-line Python prototype for the University of Sydney FoodHub booking and inventory management database (COMP9120 Database Management Systems group project).
 
-## 1. Create the database
+Students book half-hour sessions and receive a QR check-in token. Staff check students in at the front desk, mark no-shows after the 16:00 close of the operating day, view assigned shifts and rosters, set up daily shifts and sessions, record physical stock counts and adjustments, and inspect analytical reports. Every operation directly executes parameterized SQL against the live PostgreSQL database.
 
-Create an empty database called `campus_pantry`, then run these scripts in order in pgAdmin's
-Query Tool, or with `psql -d campus_pantry -f <file>`:
+---
 
-| Order | File | What it does |
-| --- | --- | --- |
-| 1 | `01_schema.sql` | Tables, constraints, triggers, views (schema `campus_pantry`) |
-| 2 | `sql/01b_fix_booking_trigger.sql` | Proposed fix: booking trigger no longer blocks check-in / no-show updates |
-| 3 | `sql/01c_unikey_format.sql` | CHECK constraint: UniKey must look like `abcd0123` |
-| 4 | `02_seed_data.sql` | Synthetic sample data |
-| 5 | `sql/02b_sync_sequences.sql` | Moves ID sequences past the sample IDs so new rows get free IDs |
+## 1. Prerequisites and Installation
 
-Shortcut: `sql/rebuild_campus_pantry.sql` runs all five in order and first drops any existing
-`campus_pantry` schema, so it also resets the sample data.
-
-## 2. Install and run
+- **Python 3.10+** (tested on Python 3.13)
+- **PostgreSQL 15+** (tested on PostgreSQL 16)
+- **psycopg2-binary**
 
 ```bash
+# Navigate to the app directory
 cd campus_pantry_app
-python3 -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+
+# Create and activate virtual environment (optional but recommended)
+python -m venv .venv
+# On Windows:
+.venv\Scripts\activate
+# On macOS/Linux:
+source .venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
+```
+
+---
+
+## 2. Database Configuration
+
+Connection parameters are read dynamically from standard environment variables (no hardcoded passwords in code):
+
+| Variable | Default Value | Description |
+|---|---|---|
+| `PGHOST` | `localhost` / `127.0.0.1` | PostgreSQL database host |
+| `PGPORT` | `5432` (or `5433` for custom instance) | PostgreSQL port |
+| `PGDATABASE` | `campus_pantry` | Target database name |
+| `PGUSER` | Current OS login (or `postgres`) | Database username |
+| `PGPASSWORD` | (prompted if needed) | Database password |
+
+**Example Windows PowerShell:**
+```powershell
+$env:PGHOST="127.0.0.1"
+$env:PGPORT="5433"
+$env:PGUSER="postgres"
+$env:PGDATABASE="campus_pantry"
 python cli.py
 ```
 
-Connection settings are read from environment variables (defaults in brackets):
-`PGHOST` (localhost), `PGPORT` (5432), `PGDATABASE` (campus_pantry), `PGUSER` (your login name)
-and `PGPASSWORD` (asked for if the server needs one). Example: `PGUSER=postgres python cli.py`.
-
-UniKeys use the university format: 4 lowercase letters + 4 digits (e.g. `abcd0123`).
-Sample logins (synthetic): students `zhex6714`, `chen7061`, `kara7408`, … `shre2225`;
-staff `must2203`, `part2550`, `haim2897`, `jaim3244`. `kevi5326` is both a volunteer and a student.
-
-## 3. What it does
-
-| Role | Operation | Database feature shown |
-| --- | --- | --- |
-| Student | View sessions with live spaces left | View `v_booking_attendance` (JOIN + aggregation) |
-| Student | Book a session | Multi-step transaction, row lock, trigger checks capacity and one booking per day |
-| Student | My bookings / cancel | UPDATE with ownership and status checks |
-| Staff | Front-desk QR check-in | Conditional UPDATE … RETURNING; a second scan is rejected |
-| Staff | Special booking (admin override) | Override recorded with the staff member and reason |
-| Staff | Mark no-shows | Bulk UPDATE, only after the 16:00 close of the operating day |
-| Staff | Set up a day | One transaction creates 3 shifts and 12 sessions; all or nothing |
-| Staff | Stock counts and reports | Inserts into `stock_count`; latest-count, low-stock and near-capacity reports |
-
-## 4. Transactions and concurrency
-
-`services.book_session` runs as one transaction: lock the student's row (`SELECT … FOR UPDATE`),
-check the session, insert the booking. The booking trigger then locks the session row and enforces
-capacity and the one-booking-per-day rule. If any step fails the whole transaction rolls back.
-
-Without the student lock, two simultaneous requests from the same student for different sessions
-can both pass the daily check before either commits, and both succeed. To show this:
-
+**Example macOS/Linux Bash:**
 ```bash
-python concurrency_demo.py 14 15     # two future sessions on the same day
+PGHOST=127.0.0.1 PGPORT=5433 PGUSER=postgres PGDATABASE=campus_pantry python3 cli.py
 ```
 
-Round 1 (no lock) books both sessions. Round 2 (with the lock) rejects the second request. The
-script cancels its own test bookings afterwards.
+---
 
-## 5. Files
+## 3. Database Initialisation & Rebuild
 
-| File | Purpose |
-| --- | --- |
-| `cli.py` | Menus and input/output |
-| `services.py` | Business operations, one function per user operation |
-| `db.py` | Connection settings and readable error messages |
-| `concurrency_demo.py` | Shows the double-booking race and the locking fix |
-| `sql/` | Proposed fix scripts to run alongside the team's SQL |
+To initialize or completely rebuild the disposable project database from scratch:
+
+```powershell
+psql -h 127.0.0.1 -p 5433 -U postgres -d campus_pantry -f sql/rebuild_campus_pantry.sql
+```
+
+This single command:
+1. Drops existing `campus_pantry` schema with CASCADE.
+2. Recreates schema, sequences, tables, constraints, triggers, and views (`01_schema.sql`).
+3. Seeds synthetic students, staff, volunteers, shifts, sessions, bookings, batches, and counts (`02_seed_data.sql`).
+4. Automatically synchronizes all 8 identity/serial sequences past seeded IDs.
+
+---
+
+## 4. Running the Application and Tests
+
+### A. Interactive CLI
+```bash
+python cli.py
+```
+- **Login as Student:** enter `alex1001`, `chen7061`, `kara7408`, etc.
+- **Login as Staff:** enter `must2203`, `part2550`, `haim2897`, or `jaim3244`.
+- **Login with Overlapping Roles:** enter `kevi5326` (Student + Volunteer).
+
+### B. Automated 17-Rule Business Test Suite
+```bash
+python test_all_rules.py
+```
+Executes all 17 required business rules (boundary capacity, concurrency, admin override, QR scan idempotency, 16:00 no-shows, staffing triggers, and analytical queries) and outputs a markdown summary table.
+
+### C. Concurrency Race Condition Demo
+```bash
+python concurrency_demo.py 5 6
+```
+Demonstrates that two concurrent requests for the same student or for the final session space are safely serialized using row-level locking (`SELECT ... FOR UPDATE`), preventing double-booking and overselling.
+
+---
+
+## 5. Architectural Structure
+
+```text
+campus_pantry_app/
+├── cli.py                  # User interface menus, input validation, and tables
+├── services.py             # Business transaction layer with row locking & atomic rollbacks
+├── db.py                   # Database connection pooling & friendly constraint error mapping
+├── concurrency_demo.py     # Live multi-threaded race condition demonstration
+├── test_all_rules.py       # Automated 17-test verification suite
+├── requirements.txt        # psycopg2-binary dependency
+├── README.md               # App documentation
+└── sql/
+    ├── rebuild_campus_pantry.sql   # One-shot database schema and seed builder
+    ├── 01b_fix_booking_trigger.sql # Standalone trigger patch (included in schema)
+    ├── 01c_unikey_format.sql       # Standalone UniKey regex check (included in schema)
+    └── 02b_sync_sequences.sql      # Standalone sequence sync script (included in seed)
+```

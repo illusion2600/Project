@@ -29,7 +29,9 @@ INSERT INTO person (unikey, full_name, email, contact) VALUES
 ('jone1184','Jones','jones@example.test',''),
 ('chlo1531','Chloe','chloe@example.test',''),
 ('sneh1878','Sneha','sneha@example.test',''),
-('shre2225','Shreya','shreya@example.test','');
+('shre2225','Shreya','shreya@example.test',''),
+('alex1001','Alex','alex@example.test',''),
+('emma2002','Emma','emma@example.test','');
 
 INSERT INTO staff (unikey, staff_code) VALUES
 ('must2203','STAFF-MUSTAFA'),('part2550','STAFF-PARTH'),
@@ -40,24 +42,38 @@ INSERT INTO volunteer (unikey) VALUES
 ('kevi5326'),('donn5673'),('joan6020'),('aary6367');
 
 -- Kevin is also a student for Session 1; one Person row is shared across roles.
+-- Realistic academic details populated to demonstrate degree_level and category CHECK constraints.
 INSERT INTO student (unikey, degree_level, student_category) VALUES
+('kevi5326','BACHELOR','DOMESTIC'),
+('zhex6714','POSTGRADUATE','INTERNATIONAL'),
+('chen7061','BACHELOR','INTERNATIONAL'),
+('kara7408','BACHELOR','DOMESTIC'),
+('prad7755','POSTGRADUATE','INTERNATIONAL'),
+('diks8102','BACHELOR','INTERNATIONAL'),
+('alle8449','BACHELOR','DOMESTIC'),
+('susa8796','POSTGRADUATE','DOMESTIC'),
+('clai9143','BACHELOR','INTERNATIONAL'),
+('sara9490','BACHELOR','DOMESTIC'),
+('jaco9837','POSTGRADUATE','INTERNATIONAL'),
+('jone1184','BACHELOR','DOMESTIC'),
+('chlo1531','BACHELOR','INTERNATIONAL'),
+('sneh1878','POSTGRADUATE','INTERNATIONAL'),
+('shre2225','BACHELOR','DOMESTIC'),
+('alex1001','BACHELOR','DOMESTIC'),
+('emma2002','POSTGRADUATE','INTERNATIONAL');
 
-('kevi5326',NULL,NULL),
-('zhex6714',NULL,NULL),('chen7061',NULL,NULL),('kara7408',NULL,NULL),
-('prad7755',NULL,NULL),('diks8102',NULL,NULL),('alle8449',NULL,NULL),
-('susa8796',NULL,NULL),('clai9143',NULL,NULL),('sara9490',NULL,NULL),
-('jaco9837',NULL,NULL),('jone1184',NULL,NULL),('chlo1531',NULL,NULL),
-('sneh1878',NULL,NULL),('shre2225',NULL,NULL);
-
+-- Shifts start as PLANNED, receive staffing assignments, and are then set to CLOSED
 INSERT INTO pantry_shift (shift_id, shift_date, start_time, end_time, status) VALUES
-(1, DATE '2026-10-09', TIME '10:00', TIME '12:00', 'CLOSED'),
-(2, DATE '2026-10-09', TIME '12:00', TIME '14:00', 'CLOSED'),
-(3, DATE '2026-10-09', TIME '14:00', TIME '16:00', 'CLOSED');
+(1, DATE '2026-10-09', TIME '10:00', TIME '12:00', 'PLANNED'),
+(2, DATE '2026-10-09', TIME '12:00', TIME '14:00', 'PLANNED'),
+(3, DATE '2026-10-09', TIME '14:00', TIME '16:00', 'PLANNED');
 
 INSERT INTO shift_staff_assignment (shift_id, staff_unikey, assignment_role) VALUES
 (1,'must2203','MAIN_SUPERVISOR'),(1,'part2550','ASSISTANT'),
 (2,'haim2897','MAIN_SUPERVISOR'),(2,'part2550','ASSISTANT'),
 (3,'jaim3244','MAIN_SUPERVISOR'),(3,'part2550','ASSISTANT');
+
+UPDATE pantry_shift SET status = 'CLOSED' WHERE shift_id IN (1, 2, 3);
 
 INSERT INTO volunteer_shift (shift_id, volunteer_unikey) VALUES
 (1,'nikh3591'),(1,'phoe3938'),(1,'sams4285'),
@@ -161,5 +177,22 @@ SELECT ssc.stock_number, ssc.shift_id,
           WHEN 2 THEN TIME '14:00' ELSE TIME '16:00' END)::timestamp AT TIME ZONE 'Australia/Sydney',
        'CLOSING', ssc.closing_qty, 'Synthetic closing count'
 FROM shift_stock_count ssc;
+-- Synchronize all identity sequences past manually inserted seed IDs
+SELECT setval(pg_get_serial_sequence('campus_pantry.pantry_shift', 'shift_id'),
+              COALESCE((SELECT max(shift_id) FROM pantry_shift), 0) + 1, false);
+SELECT setval(pg_get_serial_sequence('campus_pantry.session', 'session_id'),
+              COALESCE((SELECT max(session_id) FROM session), 0) + 1, false);
+SELECT setval(pg_get_serial_sequence('campus_pantry.booking', 'booking_id'),
+              COALESCE((SELECT max(booking_id) FROM booking), 0) + 1, false);
+SELECT setval(pg_get_serial_sequence('campus_pantry.product', 'product_id'),
+              COALESCE((SELECT max(product_id) FROM product), 0) + 1, false);
+SELECT setval(pg_get_serial_sequence('campus_pantry.purchase_record', 'purchase_id'),
+              COALESCE((SELECT max(purchase_id) FROM purchase_record), 0) + 1, false);
+SELECT setval(pg_get_serial_sequence('campus_pantry.purchase_record_line', 'purchase_line_id'),
+              COALESCE((SELECT max(purchase_line_id) FROM purchase_record_line), 0) + 1, false);
+SELECT setval(pg_get_serial_sequence('campus_pantry.stock_count', 'stock_count_id'),
+              COALESCE((SELECT max(stock_count_id) FROM stock_count), 0) + 1, false);
+SELECT setval('campus_pantry.stock_number_seq',
+              COALESCE((SELECT max(substring(stock_number FROM 5)::int) FROM stock_batch), 0) + 1, false);
 
 COMMIT;

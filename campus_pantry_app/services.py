@@ -244,3 +244,61 @@ def latest_stock(conn):
         SELECT stock_number, product_name, last_counted_qty, counting_unit, count_type
         FROM v_latest_stock_count
         ORDER BY product_name, stock_number""")
+
+
+def my_shifts(conn, staff_unikey):
+    """List shifts assigned to a specific staff member."""
+    return _query(conn, """
+        SELECT sh.shift_id, sh.shift_date, sh.start_time, sh.end_time, a.assignment_role, sh.status
+        FROM pantry_shift sh
+        JOIN shift_staff_assignment a ON a.shift_id = sh.shift_id
+        WHERE a.staff_unikey = %s
+        ORDER BY sh.shift_date DESC, sh.start_time""", (staff_unikey,))
+
+
+def session_bookings(conn, session_id):
+    """List bookings and attendance for a specific session."""
+    return _query(conn, """
+        SELECT b.booking_id, b.student_unikey, p.full_name, b.status, b.qr_token, b.attendance_at, b.admin_override
+        FROM booking b
+        JOIN person p ON p.unikey = b.student_unikey
+        WHERE b.session_id = %s
+        ORDER BY b.booking_id""", (session_id,))
+
+
+def shift_roster(conn, on_date):
+    """View full staffing and volunteer roster for shifts on a given date."""
+    staff_rows = _query(conn, """
+        SELECT sh.shift_id, sh.start_time, sh.end_time, 'Staff' AS person_role,
+               a.assignment_role AS duty, pe.full_name, pe.unikey
+        FROM pantry_shift sh
+        JOIN shift_staff_assignment a ON a.shift_id = sh.shift_id
+        JOIN person pe ON pe.unikey = a.staff_unikey
+        WHERE sh.shift_date = %s::date
+        ORDER BY sh.start_time, a.assignment_role""", (on_date,))
+    vol_rows = _query(conn, """
+        SELECT sh.shift_id, sh.start_time, sh.end_time, 'Volunteer' AS person_role,
+               'VOLUNTEER' AS duty, pe.full_name, pe.unikey
+        FROM pantry_shift sh
+        JOIN volunteer_shift vs ON vs.shift_id = sh.shift_id
+        JOIN person pe ON pe.unikey = vs.volunteer_unikey
+        WHERE sh.shift_date = %s::date
+        ORDER BY sh.start_time, pe.full_name""", (on_date,))
+    return staff_rows + vol_rows
+
+
+def record_stock_adjustment(conn, staff_unikey, shift_id, stock_number, adjustment_kind, qty, reason):
+    """Record an intra-shift stock adjustment (RECEIPT or WASTE)."""
+    def work(cur):
+        cur.execute("SELECT 1 FROM staff WHERE unikey = %s AND is_active", (staff_unikey,))
+        if cur.fetchone() is None:
+            raise PantryError("Only active staff can record stock adjustments.")
+        cur.execute("""
+            INSERT INTO stock_adjustment (shift_id, stock_number, adjustment_kind, quantity, reason)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (shift_id, stock_number, adjustment_kind)
+            DO UPDATE SET quantity = stock_adjustment.quantity + EXCLUDED.quantity,
+                          reason = EXCLUDED.reason""",
+            (shift_id, stock_number, adjustment_kind, qty, reason))
+    return _run(conn, work)
+

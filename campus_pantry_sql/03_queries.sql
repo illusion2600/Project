@@ -61,7 +61,9 @@ WITH previous_close AS (
         JOIN pantry_shift sh2 ON sh2.shift_id = s2.shift_id
         WHERE s2.stock_number = cur.stock_number
           AND sh2.status = 'CLOSED'
-          AND (sh2.shift_date, sh2.end_time) < (cur_shift.shift_date, cur_shift.start_time)
+          AND sh2.shift_id <> cur.shift_id
+          AND (sh2.shift_date < cur_shift.shift_date
+               OR (sh2.shift_date = cur_shift.shift_date AND sh2.end_time <= cur_shift.start_time))
         ORDER BY sh2.shift_date DESC, sh2.end_time DESC
         LIMIT 1
     ) prev ON true

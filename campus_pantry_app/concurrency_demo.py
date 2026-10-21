@@ -18,7 +18,7 @@ import psycopg2
 
 from db import error_message, get_connection
 
-STUDENT = "shre2225"
+STUDENT = "alex1001"
 
 
 def attempt(label, session_id, use_lock, hold_seconds, results):
@@ -74,3 +74,4 @@ if __name__ == "__main__":
     clean_up()
     run_round("Round 1 — no student lock:", False, a, b)
     run_round("Round 2 — student row locked first:", True, a, b)
+
