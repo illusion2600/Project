@@ -57,7 +57,7 @@ BEGIN
 END $$;
 
 -- ----------------------------------------------------------------------------
--- Test 3: Rejection of 51st active booking in a session (Capacity = 50 limit)
+-- Test 3: Rejection of 51st active booking in a session (Full Capacity = 50 limit)
 -- ----------------------------------------------------------------------------
 DO $$
 DECLARE
@@ -66,7 +66,7 @@ DECLARE
     temp_unikey varchar(30);
     i integer;
 BEGIN
-    -- Create a test session with capacity = 2 to safely test the capacity boundary
+    -- Create a test session with full production capacity = 50
     INSERT INTO pantry_shift (shift_id, shift_date, start_time, end_time, status)
     VALUES (999, DATE '2026-12-01', TIME '10:00', TIME '12:00', 'PLANNED');
 
@@ -74,29 +74,28 @@ BEGIN
     VALUES (999, 'must2203', 'MAIN_SUPERVISOR'), (999, 'part2550', 'ASSISTANT');
 
     INSERT INTO session (session_id, shift_id, session_date, start_time, end_time, capacity)
-    VALUES (999, 999, DATE '2026-12-01', TIME '10:00', TIME '10:30', 2);
+    VALUES (999, 999, DATE '2026-12-01', TIME '10:00', TIME '10:30', 50);
 
-    -- Create 3 temporary test persons & students
-    FOR i IN 1..3 LOOP
-        temp_unikey := 'test' || lpad(i::text, 4, '0');
+    -- Create 51 temporary test persons & students with valid UniKey (4 letters + 4 digits)
+    FOR i IN 1..51 LOOP
+        temp_unikey := 'capp' || lpad(i::text, 4, '0');
         INSERT INTO person (unikey, full_name, email, contact)
-        VALUES (temp_unikey, 'Test Student ' || i, temp_unikey || '@uni.test', '');
+        VALUES (temp_unikey, 'Cap Student ' || i, temp_unikey || '@uni.test', '');
         INSERT INTO student (unikey, degree_level, student_category)
         VALUES (temp_unikey, 'BACHELOR', 'DOMESTIC');
     END LOOP;
 
-    -- Book spot 1 (succeeds)
-    INSERT INTO booking (student_unikey, session_id, status, qr_token)
-    VALUES ('test0001', 999, 'CONFIRMED', 'TEST-CAP-001');
+    -- Book 50 spots (1..50 all succeed, filling capacity to exactly 50)
+    FOR i IN 1..50 LOOP
+        temp_unikey := 'capp' || lpad(i::text, 4, '0');
+        INSERT INTO booking (student_unikey, session_id, status, qr_token)
+        VALUES (temp_unikey, 999, 'CONFIRMED', 'TEST-CAP-' || lpad(i::text, 3, '0'));
+    END LOOP;
 
-    -- Book spot 2 (succeeds - reaches capacity 2)
-    INSERT INTO booking (student_unikey, session_id, status, qr_token)
-    VALUES ('test0002', 999, 'CONFIRMED', 'TEST-CAP-002');
-
-    -- Attempt spot 3 (exceeds capacity - MUST FAIL)
+    -- Attempt spot 51 (exceeds capacity 50 - MUST FAIL)
     BEGIN
         INSERT INTO booking (student_unikey, session_id, status, qr_token)
-        VALUES ('test0003', 999, 'CONFIRMED', 'TEST-CAP-003');
+        VALUES ('capp0051', 999, 'CONFIRMED', 'TEST-CAP-051');
     EXCEPTION WHEN OTHERS THEN
         caught := true;
         err_msg := SQLERRM;
@@ -107,16 +106,16 @@ BEGIN
     DELETE FROM session WHERE session_id = 999;
     DELETE FROM shift_staff_assignment WHERE shift_id = 999;
     DELETE FROM pantry_shift WHERE shift_id = 999;
-    FOR i IN 1..3 LOOP
-        temp_unikey := 'test' || lpad(i::text, 4, '0');
+    FOR i IN 1..51 LOOP
+        temp_unikey := 'capp' || lpad(i::text, 4, '0');
         DELETE FROM student WHERE unikey = temp_unikey;
         DELETE FROM person WHERE unikey = temp_unikey;
     END LOOP;
 
-    IF caught AND err_msg ILIKE '%capacity%reached%' THEN
-        RAISE NOTICE '[PASS] Test 3: Session capacity boundary strictly enforced. (%)', err_msg;
+    IF caught AND err_msg ILIKE '%capacity of 50 has been reached%' THEN
+        RAISE NOTICE '[PASS] Test 3: Session capacity boundary (50 accepted, 51st rejected) strictly enforced. (%)', err_msg;
     ELSE
-        RAISE EXCEPTION '[FAIL] Test 3: Booking exceeding capacity was allowed! Got: %', err_msg;
+        RAISE EXCEPTION '[FAIL] Test 3: 51st booking was NOT rejected properly! Got: %', err_msg;
     END IF;
 END $$;
 

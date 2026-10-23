@@ -64,6 +64,11 @@ CREATE TABLE shift_staff_assignment (
 CREATE TABLE volunteer_shift (
     shift_id integer NOT NULL REFERENCES pantry_shift(shift_id),
     volunteer_unikey varchar(30) NOT NULL REFERENCES volunteer(unikey),
+    status varchar(12) NOT NULL DEFAULT 'PENDING'
+        CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
+    request_date timestamptz NOT NULL DEFAULT now(),
+    reviewed_by_staff varchar(30) REFERENCES staff(unikey),
+    reviewed_at timestamptz,
     PRIMARY KEY (shift_id, volunteer_unikey)
 );
 
@@ -211,16 +216,90 @@ BEGIN
         END IF;
     END IF;
 
-    IF NEW.admin_override AND NEW.override_by_staff IS NULL THEN
-        RAISE EXCEPTION 'Admin override must identify the staff member';
+    IF NEW.admin_override THEN
+        IF NEW.override_by_staff IS NULL THEN
+            RAISE EXCEPTION 'Admin override must identify the staff member';
+        END IF;
+        IF NEW.override_reason IS NULL OR length(btrim(NEW.override_reason)) = 0 THEN
+            RAISE EXCEPTION 'Admin override must include a valid reason';
+        END IF;
     END IF;
     RETURN NEW;
 END;
 $$;
 
 CREATE TRIGGER booking_validate_before_write
-BEFORE INSERT OR UPDATE OF student_unikey, session_id, status, admin_override, override_by_staff
+BEFORE INSERT OR UPDATE OF student_unikey, session_id, status, admin_override, override_by_staff, override_reason
 ON booking FOR EACH ROW EXECUTE FUNCTION validate_booking();
+
+-- Staff Shift Overlap Trigger: prevent assigning a staff member to overlapping shifts
+CREATE OR REPLACE FUNCTION validate_staff_shift_overlap() RETURNS trigger
+LANGUAGE plpgsql SET search_path = campus_pantry, public AS $$
+DECLARE
+    cur_date date;
+    cur_start time;
+    cur_end time;
+    overlap_count integer;
+BEGIN
+    SELECT shift_date, start_time, end_time INTO cur_date, cur_start, cur_end
+    FROM pantry_shift WHERE shift_id = NEW.shift_id;
+
+    SELECT count(*) INTO overlap_count
+    FROM shift_staff_assignment ssa
+    JOIN pantry_shift ps ON ps.shift_id = ssa.shift_id
+    WHERE ssa.staff_unikey = NEW.staff_unikey
+      AND ssa.shift_id <> NEW.shift_id
+      AND ps.shift_date = cur_date
+      AND ps.start_time < cur_end
+      AND cur_start < ps.end_time;
+
+    IF overlap_count > 0 THEN
+        RAISE EXCEPTION 'Staff member % is already assigned to an overlapping shift on %', NEW.staff_unikey, cur_date;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER staff_shift_overlap_validate
+BEFORE INSERT OR UPDATE OF shift_id, staff_unikey
+ON shift_staff_assignment FOR EACH ROW EXECUTE FUNCTION validate_staff_shift_overlap();
+
+-- Volunteer Shift Overlap Trigger: prevent volunteer from having overlapping approved/pending shifts
+CREATE OR REPLACE FUNCTION validate_volunteer_shift_overlap() RETURNS trigger
+LANGUAGE plpgsql SET search_path = campus_pantry, public AS $$
+DECLARE
+    cur_date date;
+    cur_start time;
+    cur_end time;
+    overlap_count integer;
+BEGIN
+    IF NEW.status IN ('PENDING', 'APPROVED') THEN
+        SELECT shift_date, start_time, end_time INTO cur_date, cur_start, cur_end
+        FROM pantry_shift WHERE shift_id = NEW.shift_id;
+
+        SELECT count(*) INTO overlap_count
+        FROM volunteer_shift vs
+        JOIN pantry_shift ps ON ps.shift_id = vs.shift_id
+        WHERE vs.volunteer_unikey = NEW.volunteer_unikey
+          AND vs.shift_id <> NEW.shift_id
+          AND vs.status IN ('PENDING', 'APPROVED')
+          AND ps.shift_date = cur_date
+          AND ps.start_time < cur_end
+          AND cur_start < ps.end_time;
+
+        IF overlap_count > 0 THEN
+            RAISE EXCEPTION 'Volunteer % has an overlapping shift request or assignment on %', NEW.volunteer_unikey, cur_date;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER volunteer_shift_overlap_validate
+BEFORE INSERT OR UPDATE OF shift_id, volunteer_unikey, status
+ON volunteer_shift FOR EACH ROW EXECUTE FUNCTION validate_volunteer_shift_overlap();
 
 -- Prevent overlapping shift sessions and ensure a session falls within a shift.
 CREATE OR REPLACE FUNCTION validate_session_shift() RETURNS trigger
@@ -405,10 +484,10 @@ INSERT INTO shift_staff_assignment (shift_id, staff_unikey, assignment_role) VAL
 
 UPDATE pantry_shift SET status = 'CLOSED' WHERE shift_id IN (1, 2, 3);
 
-INSERT INTO volunteer_shift (shift_id, volunteer_unikey) VALUES
-(1,'nikh3591'),(1,'phoe3938'),(1,'sams4285'),
-(2,'nikh3591'),(2,'saum4632'),(2,'nico4979'),(2,'kevi5326'),
-(3,'donn5673'),(3,'joan6020'),(3,'aary6367');
+INSERT INTO volunteer_shift (shift_id, volunteer_unikey, status) VALUES
+(1,'nikh3591','APPROVED'),(1,'phoe3938','APPROVED'),(1,'sams4285','APPROVED'),
+(2,'nikh3591','APPROVED'),(2,'saum4632','APPROVED'),(2,'nico4979','APPROVED'),(2,'kevi5326','APPROVED'),
+(3,'donn5673','APPROVED'),(3,'joan6020','APPROVED'),(3,'aary6367','APPROVED');
 
 INSERT INTO session (session_date, start_time, end_time, capacity, shift_id) VALUES
 (DATE '2026-10-09',TIME '10:00',TIME '10:30',50,1),
@@ -477,7 +556,7 @@ INSERT INTO shift_stock_count (shift_id, stock_number, opening_qty, closing_qty,
 (1,'STK-000004',50,40,NULL),(1,'STK-000005',100,95,NULL),(1,'STK-000006',70,65,NULL),
 
 (1,'STK-000007',60,55,NULL),(1,'STK-000008',40,35,NULL),
-(2,'STK-000001',90,75,NULL),(2,'STK-000002',72,64,NULL),(2,'STK-000003',55,45,NULL),
+(2,'STK-000001',92,75,'Found 2 misplaced packs on shelf during handover'),(2,'STK-000002',72,64,NULL),(2,'STK-000003',55,45,NULL),
 (2,'STK-000004',40,30,NULL),(2,'STK-000005',95,85,NULL),(2,'STK-000006',65,55,NULL),
 (2,'STK-000007',55,45,NULL),(2,'STK-000008',35,28,NULL),
 (3,'STK-000001',75,60,NULL),(3,'STK-000002',64,56,NULL),(3,'STK-000003',45,35,NULL),

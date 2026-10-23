@@ -94,6 +94,7 @@ SELECT sh.shift_id, sh.start_time, sh.end_time, pe.full_name AS volunteer_name
 FROM pantry_shift sh
 JOIN volunteer_shift vs ON vs.shift_id = sh.shift_id
 JOIN person pe ON pe.unikey = vs.volunteer_unikey
+WHERE vs.status = 'APPROVED'
 ORDER BY sh.shift_id, pe.full_name;
 
 -- Q9. Purchase totals by product.

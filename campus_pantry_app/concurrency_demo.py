@@ -9,10 +9,13 @@ before either commits, so BOTH bookings succeed and the one-per-day rule is brok
 Round 2 — WITH the student lock (what services.book_session does): the second
 transaction waits for the first to commit, then sees its booking and is rejected.
 """
+import os
 import secrets
 import sys
 import threading
 import time
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import psycopg2
 

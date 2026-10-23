@@ -69,7 +69,7 @@ Session Reservations             Idempotent QR Attendance            Batch Trace
 
 ```
                        Dispensing by Product (Q2 Summary)
-Rice 1 kg       ████████████████████████████████████ 55 packs
+Rice 1 kg       ████████████████████████████████████ 57 packs
 UHT Oat Milk 1L ███████████████████████ 35 cartons
 Sliced Bread    ██████████████████ 28 loaves
 Canned Beans    ████████████████ 25 cans

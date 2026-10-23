@@ -75,10 +75,10 @@ INSERT INTO shift_staff_assignment (shift_id, staff_unikey, assignment_role) VAL
 
 UPDATE pantry_shift SET status = 'CLOSED' WHERE shift_id IN (1, 2, 3);
 
-INSERT INTO volunteer_shift (shift_id, volunteer_unikey) VALUES
-(1,'nikh3591'),(1,'phoe3938'),(1,'sams4285'),
-(2,'nikh3591'),(2,'saum4632'),(2,'nico4979'),(2,'kevi5326'),
-(3,'donn5673'),(3,'joan6020'),(3,'aary6367');
+INSERT INTO volunteer_shift (shift_id, volunteer_unikey, status) VALUES
+(1,'nikh3591','APPROVED'),(1,'phoe3938','APPROVED'),(1,'sams4285','APPROVED'),
+(2,'nikh3591','APPROVED'),(2,'saum4632','APPROVED'),(2,'nico4979','APPROVED'),(2,'kevi5326','APPROVED'),
+(3,'donn5673','APPROVED'),(3,'joan6020','APPROVED'),(3,'aary6367','APPROVED');
 
 INSERT INTO session (session_date, start_time, end_time, capacity, shift_id) VALUES
 (DATE '2026-10-09',TIME '10:00',TIME '10:30',50,1),
@@ -147,7 +147,7 @@ INSERT INTO shift_stock_count (shift_id, stock_number, opening_qty, closing_qty,
 (1,'STK-000004',50,40,NULL),(1,'STK-000005',100,95,NULL),(1,'STK-000006',70,65,NULL),
 
 (1,'STK-000007',60,55,NULL),(1,'STK-000008',40,35,NULL),
-(2,'STK-000001',90,75,NULL),(2,'STK-000002',72,64,NULL),(2,'STK-000003',55,45,NULL),
+(2,'STK-000001',92,75,'Found 2 misplaced packs on shelf during handover'),(2,'STK-000002',72,64,NULL),(2,'STK-000003',55,45,NULL),
 (2,'STK-000004',40,30,NULL),(2,'STK-000005',95,85,NULL),(2,'STK-000006',65,55,NULL),
 (2,'STK-000007',55,45,NULL),(2,'STK-000008',35,28,NULL),
 (3,'STK-000001',75,60,NULL),(3,'STK-000002',64,56,NULL),(3,'STK-000003',45,35,NULL),
