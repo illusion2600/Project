@@ -1,116 +1,49 @@
-# Campus Pantry Prototype
+# Campus Pantry — Python prototype
 
-A command-line Python prototype for the University of Sydney FoodHub booking and inventory management database (COMP9120 Database Management Systems group project).
+A command-line prototype that connects to the Campus Pantry PostgreSQL database and lets students, volunteers and staff carry out the system's main operations.
 
-Students book half-hour sessions and receive a QR check-in token. Staff check students in at the front desk, mark no-shows after the 16:00 close of the operating day, view assigned shifts and rosters, set up daily shifts and sessions, record physical stock counts and adjustments, and inspect analytical reports. Every operation directly executes parameterized SQL against the live PostgreSQL database.
-
----
-
-## 1. Prerequisites and Installation
-
-- **Python 3.10+** (tested on Python 3.13)
-- **PostgreSQL 15+** (tested on PostgreSQL 16)
-- **psycopg2-binary**
+**Setup, run commands and a step-by-step walkthrough are in the [main README](../README.md)** (build the database first, Sections 2–3). In short, from this folder:
 
 ```bash
-# Navigate to the app directory
-cd campus_pantry_app
-
-# Create and activate virtual environment (optional but recommended)
-python -m venv .venv
-# On Windows:
-.venv\Scripts\activate
-# On macOS/Linux:
-source .venv/bin/activate
-
-# Install dependencies
+python3 -m venv .venv && source .venv/bin/activate      # Windows: py -m venv .venv; .venv\Scripts\activate
 pip install -r requirements.txt
+python3 cli.py
 ```
 
 ---
 
-## 2. Database Configuration
+## How the code is organised
 
-Connection parameters are read dynamically from standard environment variables (no hardcoded passwords in code):
+| File | Responsibility |
+|---|---|
+| `cli.py` | Menus, input prompts and table output. Holds no SQL and no business rules. |
+| `services.py` | One function per operation (book, cancel, check in, approve a volunteer, record a count, …). Every function that writes runs as **one transaction**: `with conn:` commits when the function finishes and rolls back if any step raises. |
+| `db.py` | Opens the connection from the standard `PGHOST`, `PGPORT`, `PGUSER`, `PGDATABASE` and `PGPASSWORD` environment variables (tries ports 5432 and 5433 if `PGPORT` is unset; asks for a password if needed) and turns database errors into readable messages. |
+| `test_all_rules.py` | 17 end-to-end tests through `services.py`, including a two-thread race for the last place in a session. Creates and removes its own test data. |
+| `concurrency_demo.py` | Two simultaneous bookings by the same student (`python3 concurrency_demo.py 5 6`). |
+| `sql/rebuild_campus_pantry.sql` | Drops and rebuilds the schema with seed data; use it to reset before a demo. |
+| `sql/01b_…`, `01c_…`, `02b_…`, `07_…` | Earlier patches and a migration for old databases. Their changes are already in `../campus_pantry_sql/01_schema.sql` and `02_seed_data.sql`; not needed on a fresh build. |
 
-| Variable | Default Value | Description |
-|---|---|---|
-| `PGHOST` | `localhost` / `127.0.0.1` | PostgreSQL database host |
-| `PGPORT` | `5432` (or `5433` for custom instance) | PostgreSQL port |
-| `PGDATABASE` | `campus_pantry` | Target database name |
-| `PGUSER` | Current OS login (or `postgres`) | Database username |
-| `PGPASSWORD` | (prompted if needed) | Database password |
+### Where the rules are enforced
 
-**Example Windows PowerShell:**
-```powershell
-$env:PGHOST="127.0.0.1"
-$env:PGPORT="5433"
-$env:PGUSER="postgres"
-$env:PGDATABASE="campus_pantry"
-python cli.py
-```
+The rules live in the database, not in Python, so they also hold for SQL run directly in `psql` or pgAdmin:
 
-**Example macOS/Linux Bash:**
-```bash
-PGHOST=127.0.0.1 PGPORT=5433 PGUSER=postgres PGDATABASE=campus_pantry python3 cli.py
-```
+- **Capacity (50 per session) and one active booking per student per day:** trigger `validate_booking()`, which locks the session and student rows (`SELECT … FOR UPDATE`) before counting, so concurrent bookings are serialised.
+- **Staffing (one supervisor and one assistant before a shift opens), no overlapping shifts, sessions inside their shift, batch/purchase-line product match:** triggers in `01_schema.sql`.
+- **Keys, value ranges, status values, UniKey format:** PRIMARY KEY, UNIQUE, FOREIGN KEY and CHECK constraints.
+
+`services.py` additionally locks the student row before booking and checks inputs (e.g. a session that has already finished), so the user gets a clear message before the database is asked to reject anything.
 
 ---
 
-## 3. Database Initialisation & Rebuild
+## What each role can do
 
-To initialize or completely rebuild the disposable project database from scratch:
+After `python3 cli.py`, log in with a UniKey (4 lowercase letters + 4 digits). A person with several roles first chooses a portal.
 
-```powershell
-psql -h 127.0.0.1 -p 5433 -U postgres -d campus_pantry -f sql/rebuild_campus_pantry.sql
-```
+| Role | Menu options |
+|---|---|
+| **Student** (`alex1001`, `chen7061`) | View sessions and places left for a date · Book a session (returns a check-in token) · My bookings · Cancel a booking |
+| **Volunteer** (`nikh3591`, `aary6367`; `kevi5326` is also a student) | View scheduled shifts · Request to join a shift (PENDING) · View my requests and their status · Withdraw a pending request |
+| **Staff** (`must2203`, `haim2897`, `jaim3244`, `part2550`) | 1 Check in a token · 2 Bookings for a session · 3 Special booking with admin override · 4 Mark no-shows after the 16:00 close · 5 My shifts · 6 Shift roster · 7 Approve/reject volunteer requests · 8 Assign staff to a shift · 9 Set up a day's 3 shifts and 12 sessions · 10 Day attendance summary · 11 Sessions near capacity · 12 Latest stock counts · 13 Record a stock count · 14 Record a receipt/waste adjustment · 15 Low-stock report |
 
-This single command:
-1. Drops existing `campus_pantry` schema with CASCADE.
-2. Recreates schema, sequences, tables, constraints, triggers, and views (`01_schema.sql`).
-3. Seeds synthetic students, staff, volunteers, shifts, sessions, bookings, batches, and counts (`02_seed_data.sql`).
-4. Automatically synchronizes all 8 identity/serial sequences past seeded IDs.
-
----
-
-## 4. Running the Application and Tests
-
-### A. Interactive CLI
-```bash
-python cli.py
-```
-- **Login as Student:** enter `alex1001`, `chen7061`, `kara7408`, etc.
-- **Login as Staff:** enter `must2203`, `part2550`, `haim2897`, or `jaim3244`.
-- **Login with Overlapping Roles:** enter `kevi5326` (Student + Volunteer).
-
-### B. Automated 17-Rule Business Test Suite
-```bash
-python test_all_rules.py
-```
-Executes all 17 required business rules (boundary capacity, concurrency, admin override, QR scan idempotency, 16:00 no-shows, staffing triggers, and analytical queries) and outputs a markdown summary table.
-
-### C. Concurrency Race Condition Demo
-```bash
-python concurrency_demo.py 5 6
-```
-Demonstrates that two concurrent requests for the same student or for the final session space are safely serialized using row-level locking (`SELECT ... FOR UPDATE`), preventing double-booking and overselling.
-
----
-
-## 5. Architectural Structure
-
-```text
-campus_pantry_app/
-├── cli.py                  # User interface menus, input validation, and tables
-├── services.py             # Business transaction layer with row locking & atomic rollbacks
-├── db.py                   # Database connection pooling & friendly constraint error mapping
-├── concurrency_demo.py     # Live multi-threaded race condition demonstration
-├── test_all_rules.py       # Automated 17-test verification suite
-├── requirements.txt        # psycopg2-binary dependency
-├── README.md               # App documentation
-└── sql/
-    ├── rebuild_campus_pantry.sql   # One-shot database schema and seed builder
-    ├── 01b_fix_booking_trigger.sql # Standalone trigger patch (included in schema)
-    ├── 01c_unikey_format.sql       # Standalone UniKey regex check (included in schema)
-    └── 02b_sync_sequences.sql      # Standalone sequence sync script (included in seed)
-```
+The seed data covers 9 October 2026 only. Before booking, open a day with staff option 9 (see the main README, Section 6).
