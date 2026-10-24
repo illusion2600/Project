@@ -238,7 +238,9 @@ BEGIN
         err_msg := SQLERRM;
     END;
 
-    IF caught AND err_msg ILIKE '%does not match purchase line product_id%' THEN
+    IF caught AND (err_msg ILIKE '%does not match purchase line product_id%'
+        OR err_msg ILIKE '%stock_batch_purchase_product_fkey%'
+        OR err_msg ILIKE '%violates foreign key constraint%') THEN
         RAISE NOTICE '[PASS] Test 8: Mismatched stock batch product was rejected. (%)', err_msg;
     ELSE
         RAISE EXCEPTION '[FAIL] Test 8: Mismatched batch product was allowed! Got: %', err_msg;

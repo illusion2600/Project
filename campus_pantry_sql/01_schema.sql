@@ -112,7 +112,8 @@ CREATE TABLE purchase_record_line (
     purchase_id bigint NOT NULL REFERENCES purchase_record(purchase_id),
     product_id integer NOT NULL REFERENCES product(product_id),
     quantity integer NOT NULL CHECK (quantity > 0),
-    unit_cost numeric(10,2) CHECK (unit_cost IS NULL OR unit_cost >= 0)
+    unit_cost numeric(10,2) CHECK (unit_cost IS NULL OR unit_cost >= 0),
+    UNIQUE (purchase_line_id, product_id)
 );
 
 CREATE TABLE stock_batch (
@@ -124,7 +125,9 @@ CREATE TABLE stock_batch (
     received_on date NOT NULL,
     expires_on date,
     received_qty integer NOT NULL CHECK (received_qty >= 0),
-    CHECK (expires_on IS NULL OR expires_on >= received_on)
+    CHECK (expires_on IS NULL OR expires_on >= received_on),
+    CONSTRAINT stock_batch_purchase_product_fkey FOREIGN KEY (purchase_line_id, product_id)
+        REFERENCES purchase_record_line(purchase_line_id, product_id)
 );
 
 CREATE TABLE stock_count (

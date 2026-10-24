@@ -156,4 +156,28 @@ BEGIN
 END;
 $$;
 
+-- 5. Purchase line and stock batch consistency (composite foreign key)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE table_schema = 'campus_pantry'
+          AND table_name = 'purchase_record_line'
+          AND constraint_name = 'purchase_record_line_purchase_line_id_product_id_key'
+    ) THEN
+        ALTER TABLE purchase_record_line ADD CONSTRAINT purchase_record_line_purchase_line_id_product_id_key UNIQUE (purchase_line_id, product_id);
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE table_schema = 'campus_pantry'
+          AND table_name = 'stock_batch'
+          AND constraint_name = 'stock_batch_purchase_product_fkey'
+    ) THEN
+        ALTER TABLE stock_batch ADD CONSTRAINT stock_batch_purchase_product_fkey
+            FOREIGN KEY (purchase_line_id, product_id)
+            REFERENCES purchase_record_line(purchase_line_id, product_id);
+    END IF;
+END $$;
+
 COMMIT;

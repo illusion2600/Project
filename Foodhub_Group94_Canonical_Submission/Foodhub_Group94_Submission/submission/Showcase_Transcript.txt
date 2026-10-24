@@ -1,0 +1,34 @@
+CAMPUS PANTRY - GROUP 94 SHOWCASE
+Narration: computer-generated Microsoft Zira Desktop. Synthetic data only.
+The footage uses actual captured showcase output and executed test evidence.
+
+[00:00:00] Campus Pantry
+Campus Pantry connects FoodHub collection bookings, attendance and stock records. Separate records make it difficult to plan demand and investigate shortages. Our PostgreSQL and Python prototype gives students, volunteers and staff one linked workflow. This is Group ninety four's university showcase, using synthetic data.
+
+[00:00:19,125] One identity, connected records
+Person stores shared identity once, while student, staff and volunteer roles can overlap. Bookings connect students to sessions and shifts. Purchases connect to batches and physical stock counts. Sixteen tables and three reporting views separate these responsibilities, while keys and constraints preserve the relationships.
+
+[00:00:37,958] A safe booking workflow
+This recorded showcase runs the real service methods in a temporary database. Its clearly labelled simulated clock makes the demonstration repeatable after hours. Staff create three shifts and twelve sessions, assign a supervisor and assistant, then open a shift. Alex books a place. A duplicate booking is correctly rejected.
+
+[00:00:57,167] Volunteers and attendance
+A volunteer requests a shift and staff approve the pending request. Staff then check in the student's token. Repeating the scan leaves one attendance record. Valid late arrivals remain eligible on their booking date, from ten until four Sydney time, even after their original shift has closed. Tokens from other dates are rejected.
+
+[00:01:15,958] A stock decision you can explain
+Inventory starts with a real opening count. One hundred packs, plus ten received, minus two wasted, minus eighty eight remaining, gives twenty estimated packs dispensed. The calculation estimates movement from counts, rather than recording each handout. Staff close the reconciled shift, protecting its stock records from later edits.
+
+[00:01:36,250] Rules survive simultaneous requests
+Booking transactions lock the student and session in a consistent order. The database enforces fifty places per session and one standard daily booking. Staff exceptions require a reason and never bypass capacity. Shared roster locks prevent overlapping assignments. Each operation commits together or rolls back on failure.
+
+[00:01:54,750] Verified against PostgreSQL
+All forty four regression tests passed in each of two runs on PostgreSQL sixteen point fifteen, with no failures or skipped tests. Coverage includes ten synchronized concurrency scenarios, twenty three SQL assertions and known analytical results. The showcase also passed, and its disposable database was removed successfully.
+
+[00:02:13,958] Ready for the university showcase
+The package includes editable poster files, source code, setup instructions, the report and repeatable evidence. UniKey sign in and token entry are simulated. University authentication, email delivery and QR images are outside this release. OpenAI Codex assisted with development and documentation. This narration is computer generated. Group members remain responsible for reviewing and understanding the submission.
+
+VERIFICATION
+Duration: 158.52 seconds; maximum permitted: 180 seconds.
+1920 x 1080, 24 frames/second, H.264 video and AAC narration.
+Final test evidence: 44/44 passed twice on PostgreSQL 16.15; ten concurrency scenarios.
+Source evidence: final poster; showcase.py actual run; evidence/test-results-run-1.json and run-2.json.
+No real students, credentials, signatures, email delivery or production deployment are depicted.

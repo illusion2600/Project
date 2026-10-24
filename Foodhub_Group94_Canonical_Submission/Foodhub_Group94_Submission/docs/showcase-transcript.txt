@@ -1,0 +1,15 @@
+CAMPUS PANTRY | Group 94 | Final showcase
+Synthetic data; simulated 10 October 2026, 10:15 Sydney time.
+Creates and removes its own test database. Existing app data is untouched.
+
+1. Set up a new day: 3 shifts and 12 half-hour sessions.
+2. Assign a supervisor and assistant; open the shift.
+3. Student alex1001 books a place (booking 16); a token is generated.
+   Duplicate attempt correctly rejected: Student already has an active booking on this date
+4. Volunteer nikh3591 requests the shift; staff approves the pending request.
+5. Staff checks in the student; scanning again leaves one attendance record.
+6. Reconcile stock and close the shift:
+   100 opening + 10 received - 2 waste - 88 closing = 20 estimated dispensed.
+   Closed-shift stock and staffing are protected from later edits.
+
+SHOWCASE PASSED. Disposable database removed successfully.

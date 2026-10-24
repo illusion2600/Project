@@ -1,0 +1,61 @@
+Campus Pantry — FoodHub university showcase
+Demo sign-in uses a seeded UniKey; it does not verify university credentials.
+Operating hours: 10:00-16:00 Australia/Sydney.
+
+UniKey (blank to quit):   Hello, Mustafa (Roles: Staff).
+
+== Staff must2203 ==
+  1. Front desk: check in a booking token
+  2. Front desk: view bookings for a session
+  3. Special booking (admin override)
+  4. Mark no-shows after closing
+  5. View my assigned shifts
+  6. View shift staffing & confirmed volunteer roster
+  7. Manage volunteer shift requests (Approve / Reject)
+  8. Assign staff member to a shift
+  9. Set up a day's shifts and sessions
+  10. Report: day attendance summary
+  11. Report: sessions near capacity
+  12. Stock: latest counts
+  13. Stock: record a count
+  14. Stock: record receipt/waste adjustment
+  15. Report: low stock
+  16. Open a fully staffed PLANNED shift
+  17. Close an OPEN shift after stock reconciliation
+  18. Report: shift stock reconciliation
+  19. View upcoming shifts and status
+  0. Back
+Choose:   Stock no.   Product           Last count  Unit    Type   
+  ----------  ----------------  ----------  ------  -------
+  STK-000008  Apple bag         20          bag     CLOSING
+  STK-000005  Beans 400 g       75          can     CLOSING
+  STK-000007  Oats 500 g        35          pack    CLOSING
+  STK-000002  Pasta 500 g       56          pack    CLOSING
+  STK-000001  Rice 1 kg         60          pack    CLOSING
+  STK-000004  Sliced bread      20          loaf    CLOSING
+  STK-000006  Tuna 185 g        45          can     CLOSING
+  STK-000003  UHT oat milk 1 L  35          carton  CLOSING
+
+== Staff must2203 ==
+  1. Front desk: check in a booking token
+  2. Front desk: view bookings for a session
+  3. Special booking (admin override)
+  4. Mark no-shows after closing
+  5. View my assigned shifts
+  6. View shift staffing & confirmed volunteer roster
+  7. Manage volunteer shift requests (Approve / Reject)
+  8. Assign staff member to a shift
+  9. Set up a day's shifts and sessions
+  10. Report: day attendance summary
+  11. Report: sessions near capacity
+  12. Stock: latest counts
+  13. Stock: record a count
+  14. Stock: record receipt/waste adjustment
+  15. Report: low stock
+  16. Open a fully staffed PLANNED shift
+  17. Close an OPEN shift after stock reconciliation
+  18. Report: shift stock reconciliation
+  19. View upcoming shifts and status
+  0. Back
+Choose: 
+UniKey (blank to quit): 

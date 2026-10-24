@@ -1,0 +1,63 @@
+CAMPUS PANTRY - GROUP 94
+Final poster and showcase notes for Samowel Aboud
+Updated 24 October 2026
+
+CANONICAL HANDOFF
+Use Foodhub_Group94_Canonical_Submission.zip and open its Foodhub_Group94_Submission folder. Read START_HERE.md first. That index identifies the current report, poster, source code, setup instructions and evidence. Use the current files together rather than mixing them with the original prototype documents.
+In the archive, submission/Poster.pdf is the one-page print poster, submission/Poster.pptx is its editable one-slide source, and submission/Project_Report.pdf is the final project report. These notes are submission/Showcase_Notes.txt.
+The supplied portrait template is approximately A0 (840 x 1188 mm). Preserve its aspect ratio and check the print preview before ordering. No printing has been ordered.
+Team names: Ziyue Wu, Nikhil Khatri and Samowel Aboud. The prepared contribution summary uses the user-requested allocation of 34%, 33% and 33% respectively, totalling 100%. Member review, confirmation and signatures remain pending.
+The project brief requires a contribution summary, project report, recorded showcase video of at most three minutes, and one-page poster. All four document/media components have now been prepared. The contribution form preserves the official declaration and original reported contributions, adds today's Codex-assisted work with clear attribution, and leaves signatures unsigned. See START_HERE.md and SUBMISSION_READINESS.txt for the final member-review step. A Google Drive share link is a handoff, not a Canvas submission.
+The finished video is submission/Showcase.mp4, with a duration of 158.52 seconds (2 minutes 38.52 seconds). It uses 1080p video, subtitles and clearly labelled Microsoft Zira synthetic narration. This is the prepared showcase recording; the group should review it and be able to explain the demonstrated work.
+
+SHORT WALKTHROUGH
+Campus Pantry connects food-collection bookings, attendance, volunteer staffing and stock records through a Python command-line application and PostgreSQL.
+The database has 16 tables and three reporting views. Twelve named SQL query groups produce thirteen SELECT result sets because Q8 has two. Person stores identity once, while student, volunteer and staff roles can overlap.
+Students reserve collection sessions. A standard booking is limited to one active booking per student per day, with at most 50 non-cancelled bookings per session. A staff-attributed override needs a reason and never bypasses capacity. Booking transactions lock the student and session records to protect these decisions from concurrent requests.
+Staff create a day of three shifts and twelve half-hour sessions. Shifts progress from PLANNED to OPEN to CLOSED. Opening requires one active main supervisor and one active assistant. Staffing is fixed after opening; completed inventory is protected after closure.
+Attendance is separate from reservation. Staff enter a booking token during 10:00 inclusive to 16:00 exclusive, Australia/Sydney, on its booking date. Same-day late arrival remains valid even if the student's original shift has already closed. Repeating a valid scan returns the existing attendance result. No-shows are marked only at or after the operating day ends.
+Volunteers request shifts and staff approve or reject pending requests. A later decision cannot overwrite a request that has already been reviewed.
+Inventory requires a genuine opening observation before adjustments or a closing count. Estimated dispensing is opening plus receipts minus waste minus closing. The final demonstration checks 100 + 10 - 2 - 88 = 20 rice packs. These are synthetic demonstration quantities, not measured real-world demand.
+
+VERIFIED EVIDENCE
+The final 44-test suite passed twice against PostgreSQL 16.15, with zero failures, errors or skipped tests. Both runs included ten coordinated concurrency scenarios. The suite also executed 23 explicit SQL expected-failure assertions and checked known results for all twelve analytical query groups.
+Each run used a different owned disposable database and verified cleanup. The final showcase completed booking, duplicate rejection, volunteer approval, attendance, stock reconciliation and shift closure, then removed its database. Actual setup commands and a CLI login, stock report and logout were also checked.
+The environment was Windows 11, Python 3.12.14 and psycopg2-binary 2.9.10. The package contains the JSON results, text logs and showcase transcript. These are targeted regression results, not a load-test or security certification.
+showcase.py deliberately simulates 10 October 2026 at 10:15 Sydney time in its own disposable database so the presentation works after hours. Label this simulation when presenting. The ordinary CLI uses the actual PostgreSQL business clock and has no simulated-time option.
+
+RECORDING OUTLINE - TARGET 2 MINUTES 55 SECONDS
+0:00-0:20  Introduce FoodHub's booking, attendance and stock-record problem. Show the poster title and final package.
+0:20-0:45  Explain Person and overlapping roles, then the booking-to-session-to-shift relationship. Mention the 16-table design.
+0:45-1:15  Run the isolated showcase. Identify the simulated time, successful booking and correctly rejected duplicate.
+1:15-1:50  Explain volunteer approval and staff check-in. Distinguish attendance from reservation and explain same-day late arrivals.
+1:50-2:20  Show the stock calculation: 100 + 10 - 2 - 88 = 20. Explain genuine opening counts and closed-shift protection.
+2:20-2:45  Display the final 44/44 results from both runs and the ten coordinated concurrency scenarios. Explain how transactions and shared locks protect consistency.
+2:45-2:55  State that sign-in and token entry are educational simulations, acknowledge AI assistance, and finish.
+This outline remains useful for live practice or for a group-recorded alternative. The canonical archive already includes the completed 158.52-second showcase video. Any replacement recording should demonstrate the final prototype, remain below three minutes and keep terminal text readable.
+
+QUESTIONS TO PREPARE
+Why separate bookings and attendance?
+A reservation does not prove collection occurred. The booking status and attendance timestamp record the actual check-in.
+
+Why Person plus role tables?
+It avoids repeated identity details and allows a person to hold multiple roles. Each role's primary key also references Person.
+
+What makes an operation atomic?
+One transaction commits all its database changes on success and rolls them back on failure. For example, a closing observation and its shift summary change together.
+
+Is every relation in BCNF?
+Do not make a blanket claim. stock_batch retains product_id even though purchase_line_id determines it. The final design documents that redundancy and protects the matching pair with a composite foreign key.
+
+Does the application authenticate real students, scan QR images or send email?
+No. The local showcase selects a synthetic UniKey identity and uses terminal token entry. University authentication, QR-image generation, camera scanning and email delivery are not integrated.
+
+Are all records immutable?
+No. Closed-shift inventory and opened-shift staffing are protected by the implemented rules. This is not a tamper-proof audit ledger. Stock adjustments aggregate by shift, batch and kind and retain the latest reason.
+
+AI ACKNOWLEDGEMENT
+OpenAI Codex assisted with source review, implementation, test development, documentation, poster wording and layout. It executed the recorded final database tests and prepared the evidence files. Group members remain responsible for reviewing, understanding and explaining the submitted work and acknowledging AI assistance under the unit requirements. These notes do not assert that anyone has already reviewed, approved or signed the work.
+
+SOURCE BASIS
+Project Brief.pdf, COMP9120 Semester 2 2026, and the supplied poster template.
+The revised canonical source code, captured PostgreSQL test results and showcase transcript.
+The original Foodhub_project.zip provides the project baseline; its older claims and test results do not describe this final revision.

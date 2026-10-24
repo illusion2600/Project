@@ -1,0 +1,50 @@
+test_attendance_metadata_and_qr_constraints (test_release.ReleaseTests.test_attendance_metadata_and_qr_constraints) ... ok
+test_booking_daily_limit_and_token (test_release.ReleaseTests.test_booking_daily_limit_and_token) ... ok
+test_cancellation_releases_capacity_and_requires_owner (test_release.ReleaseTests.test_cancellation_releases_capacity_and_requires_owner) ... ok
+test_capacity_parent_schedule_and_batch_integrity (test_release.ReleaseTests.test_capacity_parent_schedule_and_batch_integrity) ... ok
+test_checkin_late_arrival_after_original_shift_closed (test_release.ReleaseTests.test_checkin_late_arrival_after_original_shift_closed) ... ok
+test_checkin_operating_hours_boundaries (test_release.ReleaseTests.test_checkin_operating_hours_boundaries) ... ok
+test_checkin_past_future_and_unopened_rejected (test_release.ReleaseTests.test_checkin_past_future_and_unopened_rejected) ... ok
+test_checkin_same_day_late_repeat_and_unknown (test_release.ReleaseTests.test_checkin_same_day_late_repeat_and_unknown) ... ok
+test_cli_invalid_staff_role_does_not_write (test_release.ReleaseTests.test_cli_invalid_staff_role_does_not_write) ... ok
+test_cli_volunteer_filter_typo_recovers_in_staff_portal (test_release.ReleaseTests.test_cli_volunteer_filter_typo_recovers_in_staff_portal) ... ok
+test_concurrency_direct_sql_last_seat (test_release.ReleaseTests.test_concurrency_direct_sql_last_seat) ... ok
+test_concurrency_direct_sql_staff_overlap (test_release.ReleaseTests.test_concurrency_direct_sql_staff_overlap) ... ok
+test_concurrency_direct_sql_volunteer_overlap (test_release.ReleaseTests.test_concurrency_direct_sql_volunteer_overlap) ... ok
+test_concurrency_duplicate_opening_is_atomic (test_release.ReleaseTests.test_concurrency_duplicate_opening_is_atomic) ... ok
+test_concurrency_last_seat (test_release.ReleaseTests.test_concurrency_last_seat) ... ok
+test_concurrency_mixed_sql_service_booking (test_release.ReleaseTests.test_concurrency_mixed_sql_service_booking) ... ok
+test_concurrency_review_decision_once (test_release.ReleaseTests.test_concurrency_review_decision_once) ... ok
+test_concurrency_same_student_two_sessions (test_release.ReleaseTests.test_concurrency_same_student_two_sessions) ... ok
+test_concurrency_staff_overlap (test_release.ReleaseTests.test_concurrency_staff_overlap) ... ok
+test_concurrency_volunteer_overlap (test_release.ReleaseTests.test_concurrency_volunteer_overlap) ... ok
+test_exact_fifty_seat_boundary (test_release.ReleaseTests.test_exact_fifty_seat_boundary) ... ok
+test_inactive_roles_are_hidden_and_denied (test_release.ReleaseTests.test_inactive_roles_are_hidden_and_denied) ... ok
+test_inventory_closing_first_and_adjustment_first_rollback (test_release.ReleaseTests.test_inventory_closing_first_and_adjustment_first_rollback) ... ok
+test_inventory_duplicate_observations_and_missing_close (test_release.ReleaseTests.test_inventory_duplicate_observations_and_missing_close) ... ok
+test_inventory_full_reconciliation_and_closed_history (test_release.ReleaseTests.test_inventory_full_reconciliation_and_closed_history) ... ok
+test_inventory_invalid_inputs_and_low_stock (test_release.ReleaseTests.test_inventory_invalid_inputs_and_low_stock) ... ok
+test_inventory_negative_dispensing_cannot_close (test_release.ReleaseTests.test_inventory_negative_dispensing_cannot_close) ... ok
+test_no_show_boundary_and_idempotence (test_release.ReleaseTests.test_no_show_boundary_and_idempotence) ... ok
+test_non_student_and_missing_session_rejected (test_release.ReleaseTests.test_non_student_and_missing_session_rejected) ... ok
+test_override_cannot_skip_capacity (test_release.ReleaseTests.test_override_cannot_skip_capacity) ... ok
+test_override_validates_actor_reason_and_updates (test_release.ReleaseTests.test_override_validates_actor_reason_and_updates) ... ok
+test_past_and_closed_volunteer_requests_rejected (test_release.ReleaseTests.test_past_and_closed_volunteer_requests_rejected) ... ok
+test_query_error_rolls_back_and_menu_recovers (test_release.ReleaseTests.test_query_error_rolls_back_and_menu_recovers) ... ok
+test_sandbox_ignores_normal_database_configuration (test_release.ReleaseTests.test_sandbox_ignores_normal_database_configuration) ... ok
+test_schema_seed_and_shared_roles (test_release.ReleaseTests.test_schema_seed_and_shared_roles) ... ok
+test_session_must_fit_shift_without_overlap (test_release.ReleaseTests.test_session_must_fit_shift_without_overlap) ... ok
+test_setup_day_and_lifecycle (test_release.ReleaseTests.test_setup_day_and_lifecycle) ... ok
+test_sql_transaction_demo_and_failure_suite_preserve_all_rows (test_release.ReleaseTests.test_sql_transaction_demo_and_failure_suite_preserve_all_rows) ... ok
+test_sql_validation_reports_expected_clean_seed (test_release.ReleaseTests.test_sql_validation_reports_expected_clean_seed) ... ok
+test_staff_assignment_upsert_and_planned_role_correction (test_release.ReleaseTests.test_staff_assignment_upsert_and_planned_role_correction) ... ok
+test_staff_reports_and_mutations_require_actor (test_release.ReleaseTests.test_staff_reports_and_mutations_require_actor) ... ok
+test_twelve_query_groups_thirteen_known_result_sets (test_release.ReleaseTests.test_twelve_query_groups_thirteen_known_result_sets) ... ok
+test_volunteer_reapply_and_withdraw (test_release.ReleaseTests.test_volunteer_reapply_and_withdraw) ... ok
+test_volunteer_request_approval_and_stale_review (test_release.ReleaseTests.test_volunteer_request_approval_and_stale_review) ... ok
+
+----------------------------------------------------------------------
+Ran 44 tests in 9.116s
+
+OK
+Evidence written to evidence/test-results-run-2.json
