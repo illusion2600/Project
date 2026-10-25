@@ -2,7 +2,7 @@
 
 **Course:** COMP9120 Database Management Systems  
 **Project:** Campus Pantry — FoodHub Booking, Attendance & Inventory Database System  
-**Semester:** Semester 1, 2026  
+**Semester:** 25 Octomber, 2026  
 **Institution:** The University of Sydney  
 
 ---
@@ -34,5 +34,5 @@ We declare that the intellectual ownership of the database architecture, relatio
 
 **Student Name:** ________________________________________  
 **Student ID (SID):** ____________________________________  
-**Date:** 22 October 2026  
+**Date:** 25 October 2026  
 **Signature:** ___________________________________________  
